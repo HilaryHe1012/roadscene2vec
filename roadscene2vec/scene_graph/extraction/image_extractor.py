@@ -33,6 +33,7 @@ class RealExtractor(ex):
         self.cfg.merge_from_file(model_zoo.get_config_file(model_path))
         self.cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5  # set threshold for this model
         self.cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(model_path)
+        self.cfg.MODEL.DEVICE = 'cpu'
         self.coco_class_names = MetadataCatalog.get(self.cfg.DATASETS.TRAIN[0]).get('thing_classes')
         self.predictor = DefaultPredictor(self.cfg)
 
