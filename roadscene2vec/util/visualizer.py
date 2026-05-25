@@ -16,7 +16,7 @@ from roadscene2vec.scene_graph.extraction.carla_extractor import CarlaExtractor
 from roadscene2vec.data.dataset import RawImageDataset
 import matplotlib
 import matplotlib.pyplot as plt
-matplotlib.use('TkAgg')
+matplotlib.use('MacOSX')
 from pathlib import Path
 from tqdm import tqdm
 from timeit import default_timer as timer
