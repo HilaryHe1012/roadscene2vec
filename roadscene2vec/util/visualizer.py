@@ -99,9 +99,19 @@ def draw_scenegraph_agraph(sg):
   return Image.open(BytesIO(img))
 
 def draw_scenegraph_pydot(sg):
-  A = nx_pydot.to_pydot(sg)
-  img = A.create_png()
-  return Image.open(BytesIO(img))
+      import networkx as nx
+      sg_draw = nx.MultiDiGraph()
+      node_to_str = {n: str(n).replace(':', '_') for n in sg.nodes()}
+      for n, data in sg.nodes(data=True):
+        safe = {k: v for k, v in data.items()
+                if k != 'attr' and ':' not in str(v)}
+        sg_draw.add_node(node_to_str[n], **safe)
+      for u, v, data in sg.edges(data=True):
+        safe = {k: v for k, v in data.items() if ':' not in str(v)}
+        sg_draw.add_edge(node_to_str[u], node_to_str[v], **safe)
+      A = nx_pydot.to_pydot(sg_draw)
+      img = A.create_png()
+      return Image.open(BytesIO(img))
 
 def draw(extractor, frame, bbox, bev, sg, save_path=None):
 
