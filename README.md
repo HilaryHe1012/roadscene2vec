@@ -1,4 +1,7 @@
 # roadscene2vec: A Tool for Extracting and Embedding Road Scene-Graphs
+
+Note: this version is modified to work on MacOS.
+
 ## Description
 **roadscene2vec** is an open-source tool for extracting and embedding road scene-graphs. 
 The goal of **roadscene2vec** is to enable research into the applications and capabilities of road scene-graphs by providing tools for generating scene-graphs and a framework for running graph-learning algorithms on them. We provide tools and utilities for scene graph extraction, dataset processing, graph learning, and results analysis.
@@ -90,6 +93,22 @@ https://carla.readthedocs.io/en/latest/start_quickstart/
 
 To perform image scene-graph extraction, you must first install Detectron2 by following these instructions:
 https://detectron2.readthedocs.io/en/latest/tutorials/install.html
+
+---
+## Python Setup using UV Package Manager
+[UV installation](https://docs.astral.sh/uv/getting-started/installation/): follow the instruction and install uv Python package manager
+
+When installed, run the followings
+```bash
+# creates the envrionment, a .venv folder
+uv venv --python 3.9
+# activate your virtual environment
+source .venv/bin/activate
+# this will sync your packages with the current pyproject.toml file and start downloading the packages
+uv sync
+# to ensure you've downloaded all packages needed
+uv pip list
+```
 
 ---
 ## Usage Examples
@@ -430,7 +449,3 @@ trainer.loss_func = nn.CrossEntropyLoss()
 #set visualize in use_case_5_data to true to visualize the attention scores of the scene graphs
 ```
 Note: The only parameters in the learning config that affect this use_case are load_model and model_load_path, as the models are already pre-trained. 
-
-
-
-

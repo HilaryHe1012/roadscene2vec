@@ -133,3 +133,5 @@ sg2vec/scripts/wandb/*
 # Other
 .vscode/
 examples/use_case_data/
+uv.lock
+.DS_Store

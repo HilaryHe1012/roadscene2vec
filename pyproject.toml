@@ -1,0 +1,36 @@
+[project]
+name = "roadscene2vec"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "graphviz>=0.21",
+    "imageio~=2.26.0",
+    "matplotlib>=3.9.4",
+    "networkx~=2.6.2",
+    "numpy<2",
+    "opencv-python~=4.7.0",
+    "pandas>=2.3.3",
+    "pillow>=8.4.0",
+    "py-trees~=2.2.3",
+    "pygame~=2.2.0",
+    "pytest~=7.2.1",
+    "pytorch-nlp~=0.5.0",
+    "pyyaml~=6.0",
+    "scikit-learn>=1.6.1",
+    "six~=1.16.0",
+    "torch~=2.8.0",
+    "torch-geometric>=2.6.1",
+    "torchvision>=0.17.0",
+    "tqdm~=4.62.2",
+    "wandb~=0.13.10",
+    "detectron2 @ git+https://github.com/facebookresearch/detectron2.git",
+]
+[tool.uv.extra-build-dependencies]
+detectron2 = ["torch"]
+
+[[tool.uv.index]]
+name = "pypi"
+url  = "https://pypi.org/simple"
+default = true
