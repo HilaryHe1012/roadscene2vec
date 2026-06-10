@@ -7,12 +7,6 @@ from os.path import isfile, join
 import roadscene2vec.data.dataset as ds
 from roadscene2vec.scene_graph.extraction.extractor import Extractor as ex
 from roadscene2vec.scene_graph.scene_graph import SceneGraph
-
-from detectron2.engine import DefaultPredictor
-from detectron2.data import MetadataCatalog
-from detectron2.utils import visualizer 
-from detectron2.config import get_cfg
-from detectron2 import model_zoo
 from roadscene2vec.scene_graph.extraction.bev import bev
 from tqdm import tqdm
 
@@ -23,19 +17,19 @@ class RealExtractor(ex):
 
         self.input_path = self.conf.location_data['input_path']
         self.dataset = ds.SceneGraphDataset(self.conf)
+        self.object_detection_settings = getattr(self.conf, "object_detection_settings", {}) or {}
+        self.detector_backend = self.object_detection_settings.get("backend", "detectron2").lower()
 
         if not os.path.exists(self.input_path):
             raise FileNotFoundError(self.input_path)
 
-        # detectron setup
-        model_path = 'COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml'
-        self.cfg = get_cfg()
-        self.cfg.merge_from_file(model_zoo.get_config_file(model_path))
-        self.cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5  # set threshold for this model
-        self.cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(model_path)
-        self.cfg.MODEL.DEVICE = 'cpu'
-        self.coco_class_names = MetadataCatalog.get(self.cfg.DATASETS.TRAIN[0]).get('thing_classes')
-        self.predictor = DefaultPredictor(self.cfg)
+        # build a detector adapter via the unified factory
+        from roadscene2vec.scene_graph.extraction.detectors import build_detector
+
+        detector_settings = dict(self.object_detection_settings) if self.object_detection_settings is not None else {}
+        detector_settings.setdefault('backend', self.detector_backend)
+        self.detector = build_detector(detector_settings)
+        self.coco_class_names = self.detector.names
 
         # bev setup
         self.bev = bev.BEV(config.image_settings['BEV_PATH'], mode='deploy')
@@ -107,15 +101,32 @@ class RealExtractor(ex):
         return sequence_tensor
         
     def get_bounding_box_annotated_image(self, im):
-        v = visualizer.Visualizer(im[:, :, ::-1], 
-            MetadataCatalog.get(self.cfg.DATASETS.TRAIN[0]), 
-            scale=1.2)
-        out = v.draw_instance_predictions(self.predictor(im)['instances'].to('cpu'))
-        return out.get_image()[:, :, ::-1]
+        try:
+            # Detector implementations provide a `plot` implementation via DetectionResult
+            results = self.detector.predict(im, conf=float(self.object_detection_settings.get("confidence", 0.5)),
+                                            iou=float(self.object_detection_settings.get("iou", 0.7)),
+                                            device=self.object_detection_settings.get("device", None))
+            return results.plot(im)
+        except Exception:
+            # Fallback: try calling detector-specific plot if available
+            try:
+                return self.detector.model.plot(im)  # type: ignore[attr-defined]
+            except Exception:
+                raise
             
     def get_bounding_boxes(self, img_tensor, out_img_path=None):
         im = img_tensor
-        outputs = self.predictor(im)
+        # Use detector adapter to get a unified DetectionResult
+        res = self.detector.predict(
+            im,
+            conf=float(self.object_detection_settings.get("confidence", 0.5)),
+            iou=float(self.object_detection_settings.get("iou", 0.7)),
+            device=self.object_detection_settings.get("device", None),
+        )
+        boxes = res.boxes
+        classes = res.classes
+        image_size = res.image_size
+
         if out_img_path:
             # We can use `Visualizer` to draw the predictions on the image.
             out = self.get_bounding_box_annotated_image(im)
@@ -124,7 +135,7 @@ class RealExtractor(ex):
         # todo: after done scp to server
         # crop im to remove ego car's hood
         # find threshold then remove from pred_boxes, pred_classes, check image_size
-        bounding_boxes = outputs['instances'].pred_boxes, outputs['instances'].pred_classes, outputs['instances'].image_size
+        bounding_boxes = boxes, classes, image_size
         return bounding_boxes
 
     

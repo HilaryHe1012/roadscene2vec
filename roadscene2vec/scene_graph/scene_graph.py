@@ -61,7 +61,8 @@ class SceneGraph:
     def get_nodes_from_bboxes(self, bev, boxes, labels, coco_class_names):
         for idx, (box, label) in enumerate(zip(boxes, labels)):
             box = box.cpu().numpy().tolist()
-            class_name = coco_class_names[label]
+            label_idx = int(label.item()) if hasattr(label, 'item') else int(label)
+            class_name = coco_class_names[label_idx]
             attr = {'left': box[0], 'top': box[1], 'right': box[2], 'bottom': box[3]}
             
             # exclude vehicle dashboard
